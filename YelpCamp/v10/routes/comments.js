@@ -53,6 +53,44 @@ router.post('/', isLoggedIn, function(req, res){
 	//redirect to campground show page
 });
 
+// COMMENT EDIT ROUTE
+router.get('/:comment_id/edit', checkCommentOwnership, function(req, res){
+	Comment.findById(req.params.comment_id, function(err, foundComment){
+		if(err){
+			res.redirect("back");
+		} else {
+			res.render('comments/edit', {campground_id: req.params.id, comment: foundComment});
+		}
+	})
+});
+
+// COMMENT UPDATE
+
+router.put('/:comment_id', checkCommentOwnership, function(req, res){
+	Comment.findByIdAndUpdate(req.params.comment_id, req.body.comment, function(err, updatedComments){
+		if(err){
+			res.redirect("back");
+		} else {
+			res.redirect(`/campgrounds/${req.params.id}`);
+		}
+	})
+	// res.send('You hit the update route.');
+})
+
+// COMMENT DESTROY ROUTE
+
+router.delete('/:comment_id', checkCommentOwnership, function(req, res){
+	//find by ID and remove
+	// res.send('This is the destroy comment route.');
+	Comment.findByIdAndRemove(req.params.comment_id, function(err){
+		if(err){
+			res.redirect('back');
+		} else {
+			res.redirect(`/campgrounds/${req.params.id}`);
+		}
+	});
+});
+
 //middleware
 function isLoggedIn(req, res, next){
 	if(req.isAuthenticated()){
@@ -60,5 +98,31 @@ function isLoggedIn(req, res, next){
 	}
 	res.redirect('/login');
 };
+
+function checkCommentOwnership(req, res, next){
+	//is user logged in
+		if(req.isAuthenticated()){
+			Comment.findById(req.params.comment_id, function(err, foundComment){
+				if(err){
+					res.redirect("back");
+				} else {
+						//if user is logged in, does user own comment?
+						if(foundComment.author.id.equals(req.user._id)){
+							//if so, run this code
+							// res.render("campgrounds/edit", {campground: foundCampground});
+							next();
+						}	else {
+							// res.send('You do not have permission to do that!');
+							res.redirect("back");
+						}
+				}
+			});
+		} else {
+			// //if not, redirect somewhere
+			// console.log('You need to be logged in to do that!!!');
+			// res.send('You need to be logged in to do that!');
+			res.redirect("back");
+		}
+}
 
 module.exports = router;

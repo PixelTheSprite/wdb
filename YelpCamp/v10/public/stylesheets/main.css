@@ -17,3 +17,7 @@ body {
 #campsite_list {
 	margin: auto;
 }
+
+.delete-form {
+	display: inline;
+}
